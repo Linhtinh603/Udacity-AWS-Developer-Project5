@@ -1,0 +1,240 @@
+org: linhtinh603
+app: serverless-memory-app
+service: serverless-memory-app
+
+plugins:
+  - serverless-webpack
+  - serverless-iam-roles-per-function
+  - serverless-plugin-tracing
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: '20201221'
+
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+
+  tracing:
+    lambda: true
+    apiGateway: true
+
+  # Use these variables in the functions and resouorces section below. For example,
+  # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
+  environment:
+    MEMORY_TABLE: Memory-${self:provider.stage}
+    MEMORY_CREATED_AT_INDEX: CreatedAtIndex
+    ATTACHMENT_S3_BUCKET: linhhch-serverless-memory-images-${self:provider.stage}
+    SIGNED_URL_EXPIRATION: 300
+    JWKS_URL: https://dev-uzbbwb1udd6opcaq.us.auth0.com/.well-known/jwks.json
+
+  logs:
+    # Enable API Gateway logs
+    restApi: true
+
+functions:
+  Auth:
+    handler: src/lambda/auth/auth0Authorizer.handler
+
+  # Get Memory function
+  GetMemory:
+    handler: src/lambda/http/get-memory.handler
+    events:
+      - http:
+          method: get
+          path: memories
+          cors: true
+          authorizer: Auth
+    iamRoleStatementsInherit: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MEMORY_TABLE}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MEMORY_TABLE}/index/${self:provider.environment.MEMORY_CREATED_AT_INDEX}
+      - Effect: Allow
+        Action:
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+        Resource: '*'
+
+  # Create new Memory function
+  CreateMemory:
+    handler: src/lambda/http/create-memory.handler
+    events:
+      - http:
+          method: post
+          path: memories
+          cors: true
+          authorizer: Auth
+          request:
+            # Schema that will be used to validate incoming requests
+            schemas:
+              application/json: ${file(models/create-memory-model.json)}
+    iamRoleStatementsInherit: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MEMORY_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+        Resource: '*'
+
+  # Update a Memory function
+  UpdateMemory:
+    handler: src/lambda/http/update-memory.handler
+    events:
+      - http:
+          method: patch
+          path: memories/{memoryId}
+          cors: true
+          authorizer: Auth
+          request:
+            # Schema that will be used to validate incoming requests
+            schemas:
+              application/json: ${file(models/update-memory-model.json)}
+    iamRoleStatementsInherit: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MEMORY_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+        Resource: '*'
+
+  # Delete a Memory function
+  DeleteMemory:
+    handler: src/lambda/http/delete-memory.handler
+    events:
+      - http:
+          method: delete
+          path: memories/{memoryId}
+          cors: true
+          authorizer: Auth
+    iamRoleStatementsInherit: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MEMORY_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+        Resource: '*'
+
+  # Generate S3 upload image URL
+  GenerateUploadUrl:
+    handler: src/lambda/http/generate-upload-url.handler
+    events:
+      - http:
+          method: post
+          path: memories/{memoryId}/attachment
+          cors: true
+          authorizer: Auth
+    iamRoleStatementsInherit: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+          - dynamodb:GetItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MEMORY_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+        Resource: '*'
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
+
+    # Create a DynamoDB table with local secondary index and a composite key
+    MemoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: memoryId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: memoryId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.MEMORY_TABLE}
+        LocalSecondaryIndexes:
+          - IndexName: ${self:provider.environment.MEMORY_CREATED_AT_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL #What attributes will be copied to an index
+
+    # Create S3 bucket
+    AttachmentsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.ATTACHMENT_S3_BUCKET}
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: BucketOwnerEnforced
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
+
+    # Config S3 bucket poliicy
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Id: S3GetObjectsPolicy
+          Version: '2012-10-17'
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action:
+                - 's3:GetObject'
+                - 's3:PutObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*'
+        Bucket: !Ref AttachmentsBucket
