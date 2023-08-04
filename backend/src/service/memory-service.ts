@@ -5,7 +5,7 @@ import {
   deleteMemoryItem
 } from '../data-layer';
 import { MemoryItem } from '../models';
-import { getUploadUrl } from '../storage-layer';
+import { getAttachmentUrl, getUploadUrl } from '../storage-layer';
 import { CreateMemoryRequest, UpdateMemoryRequest } from '../requests';
 import { createLogger } from '../utils/logger';
 import * as uuid from 'uuid';
@@ -21,12 +21,12 @@ export const createMemory = async (createMemoryRequest: CreateMemoryRequest, use
 
   const memoryId = uuid.v4();
   const createdAt = new Date().toISOString();
-
-  // TODO: Add image url
+  const attachmentUrl = getAttachmentUrl(memoryId);
 
   const newItem: MemoryItem = {
-    memoryId,
     userId,
+    memoryId,
+    attachmentUrl,
     createdAt,
     ...createMemoryRequest
   };
@@ -50,10 +50,10 @@ export const updateMemory = async (
   await updateMemoryItem(userId, MemoryId, updateMemoryRequest);
 };
 
-export const deleteMemory = async (userId: string, MemoryId: string) => {
-  logger.info(`Receive deleteMemory request of User ID: ${userId} for Memory ID: ${MemoryId}`);
+export const deleteMemory = async (userId: string, memoryId: string) => {
+  logger.info(`Receive deleteMemory request of User ID: ${userId} for Memory ID: ${memoryId}`);
 
-  await deleteMemoryItem(userId, MemoryId);
+  await deleteMemoryItem(userId, memoryId);
 };
 
 export const createImagePresignedUrl = async (attachmentId: string): Promise<string> => {

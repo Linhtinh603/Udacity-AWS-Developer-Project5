@@ -6,7 +6,7 @@ import { createImagePresignedUrl } from '../../service';
 
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const MemoryId = event.pathParameters.MemoryId;
+    const MemoryId = event.pathParameters.memoryId;
 
     // GetUser
     // TODO: Check MemoryId exists

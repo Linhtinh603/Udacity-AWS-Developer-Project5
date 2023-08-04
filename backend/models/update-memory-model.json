@@ -1,23 +1,26 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "group",
+  "title": "update-memory",
   "type": "object",
   "properties": {
     "name": {
       "type": "string",
       "minLength": 1
     },
-    "dueDate": {
+    "memoryDate": {
       "type": "string"
     },
-    "done": {
-      "type": "boolean"
+    "location": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string",
+      "minLength": 10
     }
   },
   "required": [
     "name",
-    "dueDate",
-    "done"
+    "content"
   ],
   "additionalProperties": false
 }

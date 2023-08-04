@@ -1,19 +1,26 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "group",
+  "title": "create-memory",
   "type": "object",
   "properties": {
     "name": {
       "type": "string",
       "minLength": 1
     },
-    "dueDate": {
+    "memoryDate": {
       "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string",
+      "minLength": 10
     }
   },
   "required": [
     "name",
-    "dueDate"
+    "content"
   ],
   "additionalProperties": false
 }
