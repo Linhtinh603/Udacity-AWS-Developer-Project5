@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { History } from 'history';
 import Auth from '../auth/Auth';
-import { Button, Divider, Grid, Header, Icon, Image, Loader } from 'semantic-ui-react';
+import { Button, Divider, Grid, Header, Icon, Image, Label, Loader } from 'semantic-ui-react';
 import { getMemories, deleteMemory } from '../api/memory-api';
 import { MemoryDto } from '../types/memory-dto';
 
@@ -20,8 +20,8 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
 
   const fechMemoryData = async () => {
     const memoryData = await getMemories(auth.getIdToken());
-    setMemories(memoryData);
     setIsLoadingMemories(false);
+    setMemories(memoryData);
   };
 
   const onEditButtonClick = (memoryId: string) => {
@@ -51,57 +51,82 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
   };
 
   const renderMemoryItems = () => {
-    <Grid padded>
-      {memories.map((memory) => {
-        return (
-          <Grid.Row key={memory.memoryId}>
-            <Grid.Column width={4} verticalAlign="middle">
-              {memory.attachmentUrl && (
+    return (
+      <Grid padded>
+        {memories.map((memory) => {
+          return (
+            <Grid.Row key={memory.memoryId}>
+              <Grid.Column width={4} verticalAlign="middle">
                 <Image
                   label={{
-                    as: 'Memory Time',
+                    as: 'a',
+                    color: 'grey',
                     content: memory.memoryDate,
-                    corner: 'left',
-                    icon: 'clock outline'
+                    icon: 'time',
+                    ribbon: true
                   }}
                   src={memory.attachmentUrl}
-                  size="medium"
+                  size="large"
                   wrapped
                 />
-              )}
-            </Grid.Column>
-            <Grid.Column width={12} verticalAlign="middle">
+              </Grid.Column>
               <Grid.Column width={12} verticalAlign="middle">
-                {memory.name}
+                <Grid>
+                  <Grid.Column width={12} verticalAlign="middle">
+                    <Label basic color="blue" size="large">
+                      {memory.name}
+                    </Label>
+                  </Grid.Column>
+                  <Grid.Column width={2} floated="right">
+                    <Button
+                      icon
+                      color="blue"
+                      size="mini"
+                      onClick={() => onEditButtonClick(memory.memoryId)}
+                    >
+                      <Icon name="pencil" />
+                    </Button>
+                  </Grid.Column>
+                  <Grid.Column width={2} floated="right">
+                    <Button
+                      icon
+                      color="red"
+                      size="mini"
+                      onClick={() => onMemoryDelete(memory.memoryId)}
+                    >
+                      <Icon name="delete" />
+                    </Button>
+                  </Grid.Column>
+                </Grid>
+                <Grid.Column width={16}>
+                  <Divider />
+                </Grid.Column>
+                <Grid.Column width={16}>{memory.content}</Grid.Column>
               </Grid.Column>
-              <Grid.Column width={2} floated="right">
-                <Button icon color="blue" onClick={() => onEditButtonClick(memory.memoryId)}>
-                  <Icon name="pencil" />
-                </Button>
-              </Grid.Column>
-              <Grid.Column width={2} floated="right">
-                <Button icon color="red" onClick={() => onMemoryDelete(memory.memoryId)}>
-                  <Icon name="delete" />
-                </Button>
-              </Grid.Column>
+
               <Grid.Column width={16}>
                 <Divider />
               </Grid.Column>
-              <Grid.Column width={16}>{memory.content}</Grid.Column>
-            </Grid.Column>
-
-            <Grid.Column width={16}>
-              <Divider />
-            </Grid.Column>
-          </Grid.Row>
-        );
-      })}
-    </Grid>;
+            </Grid.Row>
+          );
+        })}
+      </Grid>
+    );
   };
 
   return (
     <div>
-      <Header as="h1">Memory Pictures</Header>
+      <Header as="h1" textAlign='center' block color='orange'>Memory Pictures</Header>
+      <Grid.Column width={16} verticalAlign="middle">
+        <Button
+          icon="add circle"
+          color="blue"
+          content="Add new memory"
+          onClick={() => history.push(`/memories/new`)}
+        ></Button>
+        <Divider />
+      </Grid.Column>
+
       {isLoadingMemories ? renderLoading() : renderMemoryItems()}
     </div>
   );

@@ -5,6 +5,7 @@ import Auth from './auth/Auth';
 import { Login } from './components/LogIn';
 import { NotFound } from './components/NotFound';
 import { Memories } from './components/Memories';
+import { NewMemory } from './components/NewMemory';
 
 export interface AppProps {
   auth: Auth;
@@ -60,6 +61,13 @@ export const App: FC<AppProps> = ({ auth, history }) => {
           exact
           render={(props) => {
             return <Memories {...props} auth={auth} />;
+          }}
+        />
+        <Route
+          path="/memories/new"
+          exact
+          render={(props) => {
+            return <NewMemory {...props} auth={auth} />;
           }}
         />
         <Route component={NotFound} />

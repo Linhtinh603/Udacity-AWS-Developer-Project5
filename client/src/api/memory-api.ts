@@ -60,6 +60,6 @@ export const getUploadUrl = async (idToken: string, memoryId: string): Promise<s
   return response.data.uploadUrl;
 };
 
-export const uploadFile = async (uploadUrl: string, file: Buffer): Promise<void> => {
+export const uploadFile = async (uploadUrl: string, file: File): Promise<void> => {
   await Axios.put(uploadUrl, file);
 };
