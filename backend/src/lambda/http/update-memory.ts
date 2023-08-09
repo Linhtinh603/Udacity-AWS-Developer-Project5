@@ -10,10 +10,10 @@ import { getUserId } from '../helper';
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const userId = getUserId(event);
-    const MemoryId = event.pathParameters.MemoryId;
+    const memoryId = event.pathParameters.memoryId;
     const updateMemoryRequest: UpdateMemoryRequest = JSON.parse(event.body);
 
-    await updateMemory(userId, MemoryId, updateMemoryRequest);
+    await updateMemory(userId, memoryId, updateMemoryRequest);
 
     return {
       statusCode: 200,

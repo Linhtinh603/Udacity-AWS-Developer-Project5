@@ -72,9 +72,10 @@ export const updateMemoryItem = async (
       },
       ConditionExpression: 'attribute_exists(memoryId)',
       UpdateExpression:
-        'set #attr_name = :name, memoryDate = :memoryDate, location = :location, content = :content',
+        'set #attr_name = :name, memoryDate = :memoryDate, #attr_location = :location, content = :content',
       ExpressionAttributeNames: {
-        '#attr_name': 'name' // Use '#attr_name' as a placeholder for attribute names to avoid reserved words
+        '#attr_name': 'name', // to avoid reserved words
+        '#attr_location': 'location' //to avoid reserved words
       },
       ExpressionAttributeValues: {
         ':name': memoryUpdate.name,

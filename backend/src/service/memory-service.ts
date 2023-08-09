@@ -1,3 +1,5 @@
+import * as uuid from 'uuid';
+import * as moment from 'moment';
 import {
   insertMemoryItem,
   getMemoryItemsByUserId,
@@ -8,7 +10,6 @@ import { MemoryItem } from '../models';
 import { getAttachmentUrl, getUploadUrl } from '../storage-layer';
 import { CreateMemoryRequest, UpdateMemoryRequest } from '../requests';
 import { createLogger } from '../utils/logger';
-import * as uuid from 'uuid';
 
 /**
  * Implement business logic
@@ -22,6 +23,7 @@ export const createMemory = async (createMemoryRequest: CreateMemoryRequest, use
   const memoryId = uuid.v4();
   const createdAt = new Date().toISOString();
   const attachmentUrl = getAttachmentUrl(memoryId);
+  createMemoryRequest.memoryDate = moment().format(createMemoryRequest.memoryDate);
 
   const newItem: MemoryItem = {
     userId,
@@ -46,6 +48,8 @@ export const updateMemory = async (
   updateMemoryRequest: UpdateMemoryRequest
 ) => {
   logger.info(`Receive updateMemory request of User ID: ${userId} for Memory ID: ${MemoryId}`);
+
+  updateMemoryRequest.memoryDate = moment().format(updateMemoryRequest.memoryDate);
 
   await updateMemoryItem(userId, MemoryId, updateMemoryRequest);
 };
