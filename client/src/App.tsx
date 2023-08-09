@@ -1,11 +1,12 @@
 import { FC } from 'react';
 import { Link, Route, Router, Switch } from 'react-router-dom';
-import { Grid, Menu, Segment } from 'semantic-ui-react';
+import { Grid, Header, Menu, Segment } from 'semantic-ui-react';
 import Auth from './auth/Auth';
 import { Login } from './components/LogIn';
 import { NotFound } from './components/NotFound';
 import { Memories } from './components/Memories';
 import { NewMemory } from './components/NewMemory';
+import { EditMemory } from './components/EditMemory';
 
 export interface AppProps {
   auth: Auth;
@@ -70,6 +71,13 @@ export const App: FC<AppProps> = ({ auth, history }) => {
             return <NewMemory {...props} auth={auth} />;
           }}
         />
+        <Route
+          path="/memories/:memoryId/edit"
+          exact
+          render={(props) => {
+            return <EditMemory {...props} auth={auth}/>;
+          }}
+        />
         <Route component={NotFound} />
       </Switch>
     );
@@ -83,6 +91,9 @@ export const App: FC<AppProps> = ({ auth, history }) => {
             <Grid.Column width={16}>
               <Router history={history}>
                 {generateMenu()}
+                <Header as="h1" textAlign="center" block color="orange">
+                  Memory Pictures
+                </Header>
                 {generateCurrentPage()}
               </Router>
             </Grid.Column>

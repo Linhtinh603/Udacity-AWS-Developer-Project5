@@ -1,6 +1,16 @@
 import { FC, useState } from 'react';
 import { History } from 'history';
-import { Button, Divider, Form, Grid, Input, Loader, Message, TextArea } from 'semantic-ui-react';
+import {
+  Button,
+  Dimmer,
+  Divider,
+  Form,
+  Grid,
+  Input,
+  Loader,
+  Message,
+  TextArea
+} from 'semantic-ui-react';
 import { createMemory, getUploadUrl, uploadFile } from '../api/memory-api';
 import Auth from '../auth/Auth';
 import { CreateMemoryRequest } from '../types';
@@ -63,9 +73,11 @@ export const NewMemory: FC<MemoryProps> = ({ auth, history }) => {
   const renderLoading = (loadingContent: string) => {
     return (
       <Grid.Row>
-        <Loader indeterminate active>
-          {loadingContent}
-        </Loader>
+        <Dimmer active inverted>
+          <Loader indeterminate active>
+            {loadingContent}
+          </Loader>
+        </Dimmer>
       </Grid.Row>
     );
   };
@@ -114,10 +126,11 @@ export const NewMemory: FC<MemoryProps> = ({ auth, history }) => {
               control={Input}
               label="Your memory name"
               placeholder="The first kiss"
+              onChange={}
             />
             <Form.Field id="memory-date" control={Input} type="date" label="The memory date" />
             <Form.Field
-              id="memory-name"
+              id="memory-location"
               control={Input}
               label="Your memory location"
               placeholder="Union Beach, HCMC"

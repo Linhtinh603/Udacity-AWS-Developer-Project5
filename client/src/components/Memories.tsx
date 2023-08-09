@@ -1,9 +1,10 @@
 import { FC, useEffect, useState } from 'react';
 import { History } from 'history';
 import Auth from '../auth/Auth';
-import { Button, Divider, Grid, Header, Icon, Image, Label, Loader } from 'semantic-ui-react';
+import { Button, Dimmer, Divider, Grid, Icon, Image, Label, Loader } from 'semantic-ui-react';
 import { getMemories, deleteMemory } from '../api/memory-api';
 import { MemoryDto } from '../types/memory-dto';
+import { Link } from 'react-router-dom';
 
 interface MemoryProps {
   auth: Auth;
@@ -17,6 +18,7 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
 
   const [memories, setMemories] = useState<Array<MemoryDto>>([]);
   const [isLoadingMemories, setIsLoadingMemories] = useState<boolean>(true);
+  const [isDeletingMemory, setIsDeletingMemory] = useState<boolean>(false);
 
   const fechMemoryData = async () => {
     const memoryData = await getMemories(auth.getIdToken());
@@ -29,23 +31,27 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
   };
 
   const onMemoryDelete = async (memoryId: string) => {
+    setIsDeletingMemory(true);
     try {
       await deleteMemory(auth.getIdToken(), memoryId);
       const memoriesAfterDeleted = memories.filter((memory) => {
         return memory.memoryId !== memoryId;
       });
+      setIsDeletingMemory(false);
       setMemories(memoriesAfterDeleted);
     } catch {
       alert('Memory deletion failed');
     }
   };
 
-  const renderLoading = () => {
+  const renderLoading = (loadingContent: string) => {
     return (
       <Grid.Row>
-        <Loader indeterminate active inline="centered">
-          Loading Memory Data
-        </Loader>
+        <Dimmer active inverted>
+          <Loader indeterminate active>
+            {loadingContent}
+          </Loader>
+        </Dimmer>
       </Grid.Row>
     );
   };
@@ -75,17 +81,25 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
                   <Grid.Column width={12} verticalAlign="middle">
                     <Label basic color="blue" size="large">
                       {memory.name}
+                      <Label.Detail>at {memory.location}</Label.Detail>
                     </Label>
                   </Grid.Column>
                   <Grid.Column width={2} floated="right">
-                    <Button
-                      icon
-                      color="blue"
-                      size="mini"
-                      onClick={() => onEditButtonClick(memory.memoryId)}
+                    <Link
+                      to={{
+                        pathname: `/memories/${memory.memoryId}/edit`,
+                        state: { memoryDto: memory }
+                      }}
                     >
-                      <Icon name="pencil" />
-                    </Button>
+                      <Button
+                        icon
+                        color="blue"
+                        size="mini"
+                        onClick={() => onEditButtonClick(memory.memoryId)}
+                      >
+                        <Icon name="pencil" />
+                      </Button>
+                    </Link>
                   </Grid.Column>
                   <Grid.Column width={2} floated="right">
                     <Button
@@ -116,7 +130,6 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
 
   return (
     <div>
-      <Header as="h1" textAlign='center' block color='orange'>Memory Pictures</Header>
       <Grid.Column width={16} verticalAlign="middle">
         <Button
           icon="add circle"
@@ -126,8 +139,9 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
         ></Button>
         <Divider />
       </Grid.Column>
-
-      {isLoadingMemories ? renderLoading() : renderMemoryItems()}
+      {isLoadingMemories && renderLoading('Loading memory data...')}
+      {isDeletingMemory && renderLoading('Deleting memory data...')}
+      {!isLoadingMemories && !isDeletingMemory && renderMemoryItems()}
     </div>
   );
 };
