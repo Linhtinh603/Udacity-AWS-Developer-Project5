@@ -28,12 +28,11 @@ export const EditMemory: FC<MemoryProps> = ({ auth, history }) => {
   const [editedMemory, setEditedMemory] = useState<MemoryDto>(location.state?.memoryDto || null);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>(UpdateStatus.NoUpdate);
 
-  const handleOnChange = async (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleOnChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
     setEditedMemory({
       ...editedMemory,
-      [event.target.name]: event.target.value
+      [name]: value
     });
   };
 
