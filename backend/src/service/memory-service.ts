@@ -6,10 +6,11 @@ import {
   updateMemoryItem,
   deleteMemoryItem
 } from '../data-layer';
-import { MemoryItem } from '../models';
+import { MemoryItem, MemoryUpdateItem } from '../models';
 import { getAttachmentUrl, getUploadUrl } from '../storage-layer';
 import { CreateMemoryRequest, UpdateMemoryRequest } from '../requests';
 import { createLogger } from '../utils/logger';
+import { deleteMemoryPicture } from '../storage-layer/attachmentUtils';
 
 /**
  * Implement business logic
@@ -23,7 +24,10 @@ export const createMemory = async (createMemoryRequest: CreateMemoryRequest, use
   const memoryId = uuid.v4();
   const createdAt = new Date().toISOString();
   const attachmentUrl = getAttachmentUrl(memoryId);
-  createMemoryRequest.memoryDate = moment().format(createMemoryRequest.memoryDate);
+
+  createMemoryRequest.memoryDate = createMemoryRequest.memoryDate
+    ? moment().format(createMemoryRequest.memoryDate)
+    : null;
 
   const newItem: MemoryItem = {
     userId,
@@ -44,24 +48,34 @@ export const getMemoriesByUserId = async (userId: string): Promise<Array<MemoryI
 
 export const updateMemory = async (
   userId: string,
-  MemoryId: string,
+  memoryId: string,
   updateMemoryRequest: UpdateMemoryRequest
 ) => {
-  logger.info(`Receive updateMemory request of User ID: ${userId} for Memory ID: ${MemoryId}`);
+  logger.info(`Receive updateMemory request of User ID: ${userId} for Memory ID: ${memoryId}`);
 
-  updateMemoryRequest.memoryDate = moment().format(updateMemoryRequest.memoryDate);
+  updateMemoryRequest.memoryDate = updateMemoryRequest.memoryDate
+    ? moment().format(updateMemoryRequest.memoryDate)
+    : null;
 
-  await updateMemoryItem(userId, MemoryId, updateMemoryRequest);
+  const memoryUpdateItem: MemoryUpdateItem = {
+    userId,
+    memoryId,
+    ...updateMemoryRequest
+  };
+
+  await updateMemoryItem(userId, memoryId, memoryUpdateItem);
 };
 
 export const deleteMemory = async (userId: string, memoryId: string) => {
   logger.info(`Receive deleteMemory request of User ID: ${userId} for Memory ID: ${memoryId}`);
 
   await deleteMemoryItem(userId, memoryId);
+
+  await deleteMemoryPicture(memoryId);
 };
 
-export const createImagePresignedUrl = async (attachmentId: string): Promise<string> => {
+export const createImagePresignedUrl = (attachmentId: string): string => {
   logger.info(`Receive createImagePresignedUrl request of attachmentId ${attachmentId}`);
 
-  return await getUploadUrl(attachmentId);
+  return getUploadUrl(attachmentId);
 };

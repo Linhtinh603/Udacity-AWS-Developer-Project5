@@ -23,3 +23,12 @@ export const getUploadUrl = (attachmentId: string): string => {
 
   return uploadUrl;
 };
+
+export const deleteMemoryPicture = async (attachmentId: string) => {
+  await s3
+    .deleteObject({
+      Bucket: bucketName,
+      Key: attachmentId
+    })
+    .promise();
+};

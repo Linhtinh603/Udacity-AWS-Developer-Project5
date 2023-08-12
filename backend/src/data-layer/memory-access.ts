@@ -3,6 +3,7 @@ import * as AWSXRay from 'aws-xray-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { createLogger } from '../utils/logger';
 import { MemoryItem, MemoryUpdateItem } from '../models';
+import { UpdateMemoryRequest } from '../requests';
 
 /**
  * Implement data layer
