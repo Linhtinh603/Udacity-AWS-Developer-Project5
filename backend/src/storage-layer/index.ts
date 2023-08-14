@@ -1,4 +1,17 @@
-import { getAttachmentUrl } from './attachmentUtils';
-import { getUploadUrl } from './attachmentUtils';
+import {
+  getMemoryPicture,
+  getAttachmentUrl,
+  getUploadUrl,
+  deleteMemoryPicture,
+  uploadToThumnailBucket,
+  deleteThumnailMemoryPicture
+} from './attachmentUtils';
 
-export { getAttachmentUrl, getUploadUrl };
+export {
+  getMemoryPicture,
+  getAttachmentUrl,
+  getUploadUrl,
+  deleteMemoryPicture,
+  uploadToThumnailBucket,
+  deleteThumnailMemoryPicture
+};

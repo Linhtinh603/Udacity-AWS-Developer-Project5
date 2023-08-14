@@ -24,6 +24,7 @@ provider:
     MEMORY_TABLE: Memory-${self:provider.stage}
     MEMORY_CREATED_AT_INDEX: CreatedAtIndex
     ATTACHMENT_S3_BUCKET: linhhch-serverless-memory-images-${self:provider.stage}
+    THUMNAIL_ATTACHMENT_S3_BUCKET: linhhch-serverless-thumnail-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     JWKS_URL: https://dev-uzbbwb1udd6opcaq.us.auth0.com/.well-known/jwks.json
 
@@ -34,6 +35,9 @@ provider:
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
+
+  SendUploadNotification:
+    handler: src/lambda/s3-event/send-notification.handler
 
   # Get Memory function
   GetMemory:
@@ -197,8 +201,70 @@ resources:
     # Create S3 bucket
     AttachmentsBucket:
       Type: AWS::S3::Bucket
+      DependsOn:
+        - SendUploadNotificationPermission
       Properties:
         BucketName: ${self:provider.environment.ATTACHMENT_S3_BUCKET}
+        NotificationConfiguration:
+          LambdaConfigurations:
+            - Event: s3:ObjectCreated:*
+              #CloudFormation: Append LambdaFunction at the end of resource name
+              Function: !GetAtt SendUploadNotificationLambdaFunction.Arn
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: BucketOwnerEnforced
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
+
+    # S3 Bucket permission to invoke Lambda function
+    SendUploadNotificationPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName: !Ref SendUploadNotificationLambdaFunction
+        Principal: s3.amazonaws.com
+        Action: lambda:InvokeFunction
+        SourceAccount: !Ref AWS::AccountId
+        SourceArn: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}
+
+    # Config S3 bucket poliicy
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Id: S3GetObjectsPolicy
+          Version: '2012-10-17'
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action:
+                - 's3:GetObject'
+                - 's3:PutObject'
+                - 's3:DeleteObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*'
+        Bucket: !Ref AttachmentsBucket
+
+    # Create S3 bucket
+    ThumnailAttachmentsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.THUMNAIL_ATTACHMENT_S3_BUCKET}
         OwnershipControls:
           Rules:
             - ObjectOwnership: BucketOwnerEnforced
@@ -222,18 +288,18 @@ resources:
               MaxAge: 3000
 
     # Config S3 bucket poliicy
-    BucketPolicy:
+    ThumnailBucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
         PolicyDocument:
           Id: S3GetObjectsPolicy
           Version: '2012-10-17'
           Statement:
-            - Sid: PublicReadForGetBucketObjects
-              Effect: Allow
-              Principal: '*'
-              Action:
-                - 's3:GetObject'
-                - 's3:PutObject'
-              Resource: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*'
-        Bucket: !Ref AttachmentsBucket
+            Effect: Allow
+            Principal: '*'
+            Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 's3:DeleteObject'
+            Resource: 'arn:aws:s3:::${self:provider.environment.THUMNAIL_ATTACHMENT_S3_BUCKET}/*'
+        Bucket: !Ref ThumnailAttachmentsBucket
