@@ -1,5 +1,5 @@
-import * as uuid from 'uuid';
-import * as moment from 'moment';
+import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
 import {
   insertMemoryItem,
   getMemoryItemsByUserId,
@@ -7,10 +7,14 @@ import {
   deleteMemoryItem
 } from '../data-layer';
 import { MemoryItem, MemoryUpdateItem } from '../models';
-import { getAttachmentUrl, getUploadUrl } from '../storage-layer';
+import {
+  getAttachmentUrl,
+  getUploadUrl,
+  deleteMemoryPicture,
+  deleteThumnailMemoryPicture
+} from '../storage-layer';
 import { CreateMemoryRequest, UpdateMemoryRequest } from '../requests';
 import { createLogger } from '../utils/logger';
-import { deleteMemoryPicture } from '../storage-layer/attachmentUtils';
 
 /**
  * Implement business logic
@@ -21,7 +25,7 @@ const logger = createLogger('MemoryService');
 export const createMemory = async (createMemoryRequest: CreateMemoryRequest, userId: string) => {
   logger.info(`Receive createMemory request of userId ${userId}`);
 
-  const memoryId = uuid.v4();
+  const memoryId = uuidv4();
   const createdAt = new Date().toISOString();
   const attachmentUrl = getAttachmentUrl(memoryId);
 
@@ -72,6 +76,8 @@ export const deleteMemory = async (userId: string, memoryId: string) => {
   await deleteMemoryItem(userId, memoryId);
 
   await deleteMemoryPicture(memoryId);
+
+  await deleteThumnailMemoryPicture(memoryId);
 };
 
 export const createImagePresignedUrl = (attachmentId: string): string => {

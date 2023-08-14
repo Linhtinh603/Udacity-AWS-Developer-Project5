@@ -1,6 +1,6 @@
 import 'source-map-support/register';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import * as middy from 'middy';
+import middy from 'middy';
 import { cors, httpErrorHandler } from 'middy/middlewares';
 import { updateMemory } from '../../service';
 import { UpdateMemoryRequest } from '../../requests';
