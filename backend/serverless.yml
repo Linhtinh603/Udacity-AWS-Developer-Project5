@@ -80,6 +80,13 @@ functions:
           - xray:PutTraceSegments
         Resource: '*'
 
+  SyncWithElasticSearch:
+    handler: src/lambda/dynamodb/elastic-search-sync.handler
+    events:
+      - stream:
+          type: dynamodb
+          arn: !GetAtt MemoryTable.StreamArn
+
   # Get Memory function
   GetMemory:
     handler: src/lambda/http/get-memory.handler
@@ -237,7 +244,9 @@ resources:
               - AttributeName: createdAt
                 KeyType: RANGE
             Projection:
-              ProjectionType: ALL #What attributes will be copied to an index
+              ProjectionType: ALL # What attributes will be copied to an index
+        StreamSpecification:
+          StreamViewType: 'NEW_IMAGE' # Only new version in the stream
 
     # Create a DynamoDB table for storing websocket connection
     ConnectionTable:
