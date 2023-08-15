@@ -3,7 +3,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import middy from 'middy';
 import { cors, httpErrorHandler } from 'middy/middlewares';
 import { getMemoriesByUserId } from '../../service';
-import { getUserId } from '../helper';
+import { getUserId } from '../auth/helper';
 import { MemoryItem } from '../../models';
 
 // Get all Memory  items for a current user

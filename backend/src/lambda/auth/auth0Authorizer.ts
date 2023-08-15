@@ -6,7 +6,7 @@ import { createLogger } from '../../utils/logger';
 import Axios from 'axios';
 import { Jwt } from '../../auth/Jwt';
 import { JwtPayload } from '../../auth/JwtPayload';
-import { certToPEM } from '../helper';
+import { certToPEM } from './helper';
 
 const logger = createLogger('auth');
 

@@ -23,6 +23,7 @@ provider:
   environment:
     MEMORY_TABLE: Memory-${self:provider.stage}
     MEMORY_CREATED_AT_INDEX: CreatedAtIndex
+    CONNECTION_TABLE: Connection-${self:provider.stage}
     ATTACHMENT_S3_BUCKET: linhhch-serverless-memory-images-${self:provider.stage}
     THUMNAIL_ATTACHMENT_S3_BUCKET: linhhch-serverless-thumnail-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
@@ -36,8 +37,48 @@ functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
+  # Send notification handler
   SendUploadNotification:
     handler: src/lambda/s3-event/send-notification.handler
+
+  # Websocket connection handler
+  ConnectHandler:
+    handler: src/lambda/websocket/connect.handler
+    events:
+      - websocket:
+          route: $connect
+    iamRoleStatementsInherit: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:ScanItem
+          - dynamodb:PutItem
+          - dynamodb:DeleteItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.CONNECTION_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+        Resource: '*'
+
+  # Websocket disconnection handler
+  DisconnectHandler:
+    handler: src/lambda/websocket/disconnect.handler
+    events:
+      - websocket:
+          route: $disconnect
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:ScanItem
+          - dynamodb:PutItem
+          - dynamodb:DeleteItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.CONNECTION_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+        Resource: '*'
 
   # Get Memory function
   GetMemory:
@@ -174,6 +215,7 @@ resources:
     MemoryTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: ${self:provider.environment.MEMORY_TABLE}
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
@@ -187,7 +229,6 @@ resources:
           - AttributeName: memoryId
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:provider.environment.MEMORY_TABLE}
         LocalSecondaryIndexes:
           - IndexName: ${self:provider.environment.MEMORY_CREATED_AT_INDEX}
             KeySchema:
@@ -197,6 +238,19 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL #What attributes will be copied to an index
+
+    # Create a DynamoDB table for storing websocket connection
+    ConnectionTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.CONNECTION_TABLE}
 
     # Create S3 bucket
     AttachmentsBucket:
@@ -232,7 +286,7 @@ resources:
                 - HEAD
               MaxAge: 3000
 
-    # S3 Bucket permission to invoke Lambda function
+    # Lambda permission for Send Notification
     SendUploadNotificationPermission:
       Type: AWS::Lambda::Permission
       Properties:

@@ -4,7 +4,7 @@ import middy from 'middy';
 import { cors, httpErrorHandler } from 'middy/middlewares';
 import { updateMemory } from '../../service';
 import { UpdateMemoryRequest } from '../../requests';
-import { getUserId } from '../helper';
+import { getUserId } from '../auth/helper';
 
 // Update  Memory item for a current user
 export const handler = middy(

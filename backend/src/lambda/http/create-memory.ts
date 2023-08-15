@@ -3,7 +3,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import middy from 'middy';
 import { cors, httpErrorHandler } from 'middy/middlewares';
 import { CreateMemoryRequest } from '../../requests';
-import { getUserId } from '../helper';
+import { getUserId } from '../auth/helper';
 import { createMemory } from '../../service';
 
 export const handler = middy(
