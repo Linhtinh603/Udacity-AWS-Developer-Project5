@@ -1,29 +1,45 @@
 import 'source-map-support/register';
 import { DynamoDBStreamEvent, DynamoDBStreamHandler } from 'aws-lambda';
+import elasticsearch from 'elasticsearch';
+import httpAwsEs from 'http-aws-es';
 
-// const es = new elasticsearch.Client({
-//   hosts: [esHost],
-//   connectionClass: httpAwsEs
-// });
+const esHost = process.env.ES_ENDPOINT;
+
+const es = new elasticsearch.Client({
+  hosts: [esHost],
+  connectionClass: httpAwsEs
+});
 
 export const handler: DynamoDBStreamHandler = async (event: DynamoDBStreamEvent) => {
-  console.log('Received stream event from DynamoDB', JSON.stringify(event));
-
   for (const record of event.Records) {
-    console.log('Processing record', JSON.stringify(record));
     if (record.eventName !== 'INSERT') {
       continue;
     }
 
-    // const newMemory = record.dynamodb.NewImage;
-    // const memoryId = newMemory;
-    // const body = {};
+    console.log('Processing record', JSON.stringify(record));
 
-    // // await es.index({
-    // //   index: 'memory-index',
-    // //   type: 'memory',
-    // //     id: memoryId,
-    // //   body: body
-    // // });
+    /* DynamoDB JSON
+    @see https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.LowLevelAPI.html#Programming.LowLevelAPI.ResponseFormat
+    */
+    const newMemory = record.dynamodb.NewImage;
+    const memoryId = newMemory.memoryId.S;
+
+    const body = {
+      memoryId: memoryId,
+      userId: newMemory.userId.S,
+      name: newMemory.name.S,
+      content: newMemory.content.S,
+      memoryDate: newMemory.memoryDate.S,
+      attachmentUrl: newMemory.attachmentUrl.S,
+      thumnailAttachmentUrl: newMemory.thumnailAttachmentUrl.S,
+      createdAt: newMemory.createdAt.S
+    };
+
+    await es.index({
+      index: 'memory-index',
+      type: 'memory',
+      id: memoryId,
+      body: body
+    });
   }
 };

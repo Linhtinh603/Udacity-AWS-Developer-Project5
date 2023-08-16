@@ -15,6 +15,10 @@ export const getAttachmentUrl = (attachmentId: string): string => {
   return `https://${bucketName}.s3.amazonaws.com/${attachmentId}`;
 };
 
+export const getThumnailAttachmentUrl = (attachmentId: string): string => {
+  return `https://${thumbnailBucketName}.s3.amazonaws.com/${attachmentId}.jpeg`;
+};
+
 export const getUploadUrl = (attachmentId: string): string => {
   const uploadUrl = s3.getSignedUrl('putObject', {
     Bucket: bucketName,

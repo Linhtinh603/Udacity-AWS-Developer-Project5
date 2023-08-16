@@ -2,8 +2,9 @@ export interface MemoryDto {
   memoryId: string;
   createdAt: string;
   name: string;
-  memoryDate: string;
-  location: string;
+  memoryDate?: string;
+  location?: string;
   content: string;
-  attachmentUrl?: string;
+  attachmentUrl: string;
+  thumnailAttachmentUrl: string;
 }

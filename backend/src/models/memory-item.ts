@@ -6,5 +6,6 @@ export interface MemoryItem {
   location?: string;
   content: string;
   attachmentUrl: string;
+  thumnailAttachmentUrl: string;
   createdAt: string;
 }

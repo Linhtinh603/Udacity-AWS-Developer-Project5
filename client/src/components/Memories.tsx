@@ -71,7 +71,7 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
                     icon: 'time',
                     ribbon: true
                   }}
-                  src={memory.attachmentUrl}
+                  src={memory.thumnailAttachmentUrl}
                   size="large"
                   wrapped
                 />

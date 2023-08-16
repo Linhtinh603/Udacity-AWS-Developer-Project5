@@ -82,6 +82,8 @@ functions:
 
   SyncWithElasticSearch:
     handler: src/lambda/dynamodb/elastic-search-sync.handler
+    environment:
+      ES_ENDPOINT: !GetAtt MemorySearch.DomainEndpoint
     events:
       - stream:
           type: dynamodb
@@ -271,7 +273,7 @@ resources:
         NotificationConfiguration:
           LambdaConfigurations:
             - Event: s3:ObjectCreated:*
-              #CloudFormation: Append LambdaFunction at the end of resource name
+              #CloudFormation: Append LambdaFunction at the end of function name
               Function: !GetAtt SendUploadNotificationLambdaFunction.Arn
         OwnershipControls:
           Rules:
@@ -366,3 +368,28 @@ resources:
               - 's3:DeleteObject'
             Resource: 'arn:aws:s3:::${self:provider.environment.THUMNAIL_ATTACHMENT_S3_BUCKET}/*'
         Bucket: !Ref ThumnailAttachmentsBucket
+
+    # Create a Elastic Search
+    MemorySearch:
+      Type: AWS::Elasticsearch::Domain
+      Properties:
+        ElasticsearchVersion: 6.3
+        DomainName: memory-search-${self:provider.stage}
+        ElasticsearchClusterConfig:
+          DedicatedMasterEnabled: false
+          ZoneAwarenessEnabled: false
+          InstanceCount: 1
+          InstanceType: t2.small.elasticsearch
+        EBSOptions:
+          EBSEnabled: true
+          Iops: 0
+          VolumeSize: 10
+          VolumeType: gp2
+        AccessPolicies:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                AWS: !Sub '${AWS::AccountId}'
+              Action: 'es:ESHttp*'
+              Resource: !Sub 'arn:aws:es:${self:provider.region}:${AWS::AccountId}:domain/memory-search-${self:provider.stage}/*'

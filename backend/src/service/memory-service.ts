@@ -11,7 +11,8 @@ import {
   getAttachmentUrl,
   getUploadUrl,
   deleteMemoryPicture,
-  deleteThumnailMemoryPicture
+  deleteThumnailMemoryPicture,
+  getThumnailAttachmentUrl
 } from '../storage-layer';
 import { CreateMemoryRequest, UpdateMemoryRequest } from '../requests';
 import { createLogger } from '../utils/logger';
@@ -28,6 +29,7 @@ export const createMemory = async (createMemoryRequest: CreateMemoryRequest, use
   const memoryId = uuidv4();
   const createdAt = new Date().toISOString();
   const attachmentUrl = getAttachmentUrl(memoryId);
+  const thumnailAttachmentUrl = getThumnailAttachmentUrl(memoryId);
 
   createMemoryRequest.memoryDate = createMemoryRequest.memoryDate
     ? moment().format(createMemoryRequest.memoryDate)
@@ -37,6 +39,7 @@ export const createMemory = async (createMemoryRequest: CreateMemoryRequest, use
     userId,
     memoryId,
     attachmentUrl,
+    thumnailAttachmentUrl,
     createdAt,
     ...createMemoryRequest
   };

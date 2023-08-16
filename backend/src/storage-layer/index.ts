@@ -1,6 +1,7 @@
 import {
   getMemoryPicture,
   getAttachmentUrl,
+  getThumnailAttachmentUrl,
   getUploadUrl,
   deleteMemoryPicture,
   uploadToThumnailBucket,
@@ -10,6 +11,7 @@ import {
 export {
   getMemoryPicture,
   getAttachmentUrl,
+  getThumnailAttachmentUrl,
   getUploadUrl,
   deleteMemoryPicture,
   uploadToThumnailBucket,
