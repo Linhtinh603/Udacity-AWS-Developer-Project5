@@ -1,9 +1,14 @@
-import { insertMemoryItem } from './memory-access';
-import { getMemoryItemsByUserId } from './memory-access';
-import { updateMemoryItem } from './memory-access';
-import { deleteMemoryItem } from './memory-access';
-import { insertConnectionItem } from './connection-access';
-import { deleteConnectionItem } from './connection-access';
+import {
+  insertMemoryItem,
+  getMemoryItemsByUserId,
+  updateMemoryItem,
+  deleteMemoryItem
+} from './memory-access';
+import {
+  insertConnectionItem,
+  getAllConnectionItems,
+  deleteConnectionItem
+} from './connection-access';
 
 export {
   insertMemoryItem,
@@ -11,5 +16,6 @@ export {
   updateMemoryItem,
   deleteMemoryItem,
   insertConnectionItem,
+  getAllConnectionItems,
   deleteConnectionItem
 };

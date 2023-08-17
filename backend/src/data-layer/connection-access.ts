@@ -26,6 +26,18 @@ export const insertConnectionItem = async (item: ConnectionItem) => {
   logger.info(`Insert new Connection successfully with id: ${item.id}`);
 };
 
+export const getAllConnectionItems = async (): Promise<DocumentClient.ItemList> => {
+  const result = await docClient
+    .scan({
+      TableName: tableName
+    })
+    .promise();
+
+  logger.info(`Get all Connections successfully, count: ${result.Count}`);
+
+  return result.Items;
+};
+
 export const deleteConnectionItem = async (connectionId: string) => {
   const key = {
     id: connectionId

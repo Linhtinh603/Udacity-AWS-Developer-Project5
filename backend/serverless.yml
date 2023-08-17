@@ -25,21 +25,20 @@ provider:
     MEMORY_CREATED_AT_INDEX: CreatedAtIndex
     CONNECTION_TABLE: Connection-${self:provider.stage}
     ATTACHMENT_S3_BUCKET: linhhch-serverless-memory-images-${self:provider.stage}
-    THUMNAIL_ATTACHMENT_S3_BUCKET: linhhch-serverless-thumnail-images-${self:provider.stage}
+    THUMNAIL_ATTACHMENT_S3_BUCKET: linhhch-serverless-thumbnail-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     JWKS_URL: https://dev-uzbbwb1udd6opcaq.us.auth0.com/.well-known/jwks.json
 
   logs:
     # Enable API Gateway logs
     restApi: true
+custom:
+  topicName: memoryTopic-${self:provider.stage}
+  esDomainName: memory-search-${self:provider.stage}
 
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
-
-  # Send notification handler
-  SendUploadNotification:
-    handler: src/lambda/s3-event/send-notification.handler
 
   # Websocket connection handler
   ConnectHandler:
@@ -80,6 +79,45 @@ functions:
           - xray:PutTraceSegments
         Resource: '*'
 
+  # Send notification to websocket function
+  SendUploadNotification:
+    environment:
+      STAGE: '${self:provider.stage}'
+      API_ID: !Ref 'WebsocketsApi' # It refers to the ID of the WebSockets API that the Lambda function interacts with
+    handler: src/lambda/s3/send-notification.handler
+    events:
+      - sns:
+          arn:
+            Fn::Join:
+              - ':'
+              - - arn:aws:sns
+                - ${self:provider.region}
+                - Ref: 'AWS::AccountId'
+                - ${self:custom.topicName}
+          topicName: ${self:custom.topicName} # MemorySNSTopic
+    iamRoleStatementsInherit: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Scan
+          - dynamodb:Delete
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.CONNECTION_TABLE}
+
+  # Resize image after upload function
+  ResizeImage:
+    handler: src/lambda/s3/resize-image.handler
+    events:
+      - sns:
+          arn:
+            Fn::Join:
+              - ':'
+              - - arn:aws:sns
+                - ${self:provider.region}
+                - Ref: 'AWS::AccountId'
+                - ${self:custom.topicName}
+          topicName: ${self:custom.topicName} # MemorySNSTopic
+
+  # Push data to Elastic Search function
   SyncWithElasticSearch:
     handler: src/lambda/dynamodb/elastic-search-sync.handler
     environment:
@@ -267,14 +305,13 @@ resources:
     AttachmentsBucket:
       Type: AWS::S3::Bucket
       DependsOn:
-        - SendUploadNotificationPermission
+        - SNSTopicPolicy
       Properties:
         BucketName: ${self:provider.environment.ATTACHMENT_S3_BUCKET}
         NotificationConfiguration:
-          LambdaConfigurations:
+          TopicConfigurations:
             - Event: s3:ObjectCreated:*
-              #CloudFormation: Append LambdaFunction at the end of function name
-              Function: !GetAtt SendUploadNotificationLambdaFunction.Arn
+              Topic: !Ref MemorySNSTopic
         OwnershipControls:
           Rules:
             - ObjectOwnership: BucketOwnerEnforced
@@ -296,16 +333,6 @@ resources:
                 - DELETE
                 - HEAD
               MaxAge: 3000
-
-    # Lambda permission for Send Notification
-    SendUploadNotificationPermission:
-      Type: AWS::Lambda::Permission
-      Properties:
-        FunctionName: !Ref SendUploadNotificationLambdaFunction
-        Principal: s3.amazonaws.com
-        Action: lambda:InvokeFunction
-        SourceAccount: !Ref AWS::AccountId
-        SourceArn: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}
 
     # Config S3 bucket poliicy
     BucketPolicy:
@@ -369,12 +396,35 @@ resources:
             Resource: 'arn:aws:s3:::${self:provider.environment.THUMNAIL_ATTACHMENT_S3_BUCKET}/*'
         Bucket: !Ref ThumnailAttachmentsBucket
 
+    MemorySNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: 'Memory SNS Topic'
+        TopicName: '${self:custom.topicName}'
+
+    SNSTopicPolicy:
+      Type: AWS::SNS::TopicPolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                AWS: '*'
+              Action: sns:Publish
+              Resource: !Ref MemorySNSTopic
+              Condition:
+                ArnLike:
+                  AWS:SourceArn: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}'
+        Topics:
+          - !Ref MemorySNSTopic
+
     # Create a Elastic Search
     MemorySearch:
       Type: AWS::Elasticsearch::Domain
       Properties:
         ElasticsearchVersion: 6.3
-        DomainName: memory-search-${self:provider.stage}
+        DomainName: '${self:custom.esDomainName}'
         ElasticsearchClusterConfig:
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false
@@ -387,9 +437,14 @@ resources:
           VolumeType: gp2
         AccessPolicies:
           Version: '2012-10-17'
+          # Need to apply fine-grained access control in Amazon OpenSearch Service
           Statement:
             - Effect: Allow
               Principal:
-                AWS: !Sub '${AWS::AccountId}'
+                AWS: '*'
               Action: 'es:ESHttp*'
-              Resource: !Sub 'arn:aws:es:${self:provider.region}:${AWS::AccountId}:domain/memory-search-${self:provider.stage}/*'
+              Resource: '*'
+              Condition:
+                IpAddress:
+                  aws:SourceIp:
+                    - '117.2.125.66/32'

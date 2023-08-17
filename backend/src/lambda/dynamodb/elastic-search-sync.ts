@@ -35,6 +35,7 @@ export const handler: DynamoDBStreamHandler = async (event: DynamoDBStreamEvent)
       createdAt: newMemory.createdAt.S
     };
 
+    // Push data to Elasticsearch
     await es.index({
       index: 'memory-index',
       type: 'memory',
