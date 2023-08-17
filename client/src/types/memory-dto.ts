@@ -6,5 +6,5 @@ export interface MemoryDto {
   location?: string;
   content: string;
   attachmentUrl: string;
-  thumnailAttachmentUrl: string;
+  thumbnailAttachmentUrl: string;
 }

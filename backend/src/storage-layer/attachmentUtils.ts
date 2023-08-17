@@ -8,14 +8,14 @@ const XAWS = AWSXRay.captureAWS(AWS);
  */
 const s3 = new XAWS.S3({ signatureVersion: 'v4' });
 const bucketName = process.env.ATTACHMENT_S3_BUCKET;
-const thumbnailBucketName = process.env.THUMNAIL_ATTACHMENT_S3_BUCKET;
+const thumbnailBucketName = process.env.THUMBNAIL_ATTACHMENT_S3_BUCKET;
 const urlExpiration = process.env.SIGNED_URL_EXPIRATION;
 
 export const getAttachmentUrl = (attachmentId: string): string => {
   return `https://${bucketName}.s3.amazonaws.com/${attachmentId}`;
 };
 
-export const getThumnailAttachmentUrl = (attachmentId: string): string => {
+export const getThumbnailAttachmentUrl = (attachmentId: string): string => {
   return `https://${thumbnailBucketName}.s3.amazonaws.com/${attachmentId}.jpeg`;
 };
 
@@ -49,7 +49,7 @@ export const deleteMemoryPicture = async (attachmentId: string) => {
     .promise();
 };
 
-export const uploadToThumnailBucket = async (attachmentId: string, convertedBuffer: Buffer) => {
+export const uploadToThumbnailBucket = async (attachmentId: string, convertedBuffer: Buffer) => {
   await s3
     .putObject({
       Bucket: thumbnailBucketName,
@@ -59,7 +59,7 @@ export const uploadToThumnailBucket = async (attachmentId: string, convertedBuff
     .promise();
 };
 
-export const deleteThumnailMemoryPicture = async (attachmentId: string) => {
+export const deleteThumbnailMemoryPicture = async (attachmentId: string) => {
   await s3
     .deleteObject({
       Bucket: thumbnailBucketName,

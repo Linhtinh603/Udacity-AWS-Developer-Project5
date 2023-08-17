@@ -1,11 +1,11 @@
 import { S3EventRecord } from 'aws-lambda';
-import { getMemoryPicture, uploadToThumnailBucket } from '../storage-layer';
+import { getMemoryPicture, uploadToThumbnailBucket } from '../storage-layer';
 import Jimp from 'jimp';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('ImageService');
 
-export const UploadPictureToThumnailBucket = async (record: S3EventRecord) => {
+export const UploadPictureToThumbnailBucket = async (record: S3EventRecord) => {
   const attachmentId = record.s3.object.key;
 
   const body = await getMemoryPicture(attachmentId);
@@ -26,5 +26,5 @@ export const UploadPictureToThumnailBucket = async (record: S3EventRecord) => {
     throw new Error('Failed to resize image');
   }
 
-  await uploadToThumnailBucket(attachmentId, convertedBuffer);
+  await uploadToThumbnailBucket(attachmentId, convertedBuffer);
 };

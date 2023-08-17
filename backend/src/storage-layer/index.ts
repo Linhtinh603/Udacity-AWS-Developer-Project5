@@ -1,19 +1,19 @@
 import {
   getMemoryPicture,
   getAttachmentUrl,
-  getThumnailAttachmentUrl,
+  getThumbnailAttachmentUrl,
   getUploadUrl,
   deleteMemoryPicture,
-  uploadToThumnailBucket,
-  deleteThumnailMemoryPicture
+  uploadToThumbnailBucket,
+  deleteThumbnailMemoryPicture
 } from './attachmentUtils';
 
 export {
   getMemoryPicture,
   getAttachmentUrl,
-  getThumnailAttachmentUrl,
+  getThumbnailAttachmentUrl,
   getUploadUrl,
   deleteMemoryPicture,
-  uploadToThumnailBucket,
-  deleteThumnailMemoryPicture
+  uploadToThumbnailBucket,
+  deleteThumbnailMemoryPicture
 };

@@ -5,7 +5,7 @@ import {
   deleteMemory,
   createImagePresignedUrl
 } from './memory-service';
-import { UploadPictureToThumnailBucket } from './image-process-service';
+import { UploadPictureToThumbnailBucket } from './image-process-service';
 import { addNewConnection, removeConnection } from './websocket-connection-service';
 import { snsProcessS3Event } from './sns-service';
 
@@ -15,7 +15,7 @@ export {
   updateMemory,
   deleteMemory,
   createImagePresignedUrl,
-  UploadPictureToThumnailBucket,
+  UploadPictureToThumbnailBucket,
   addNewConnection,
   removeConnection,
   snsProcessS3Event

@@ -13,18 +13,18 @@ interface MemoryProps {
 
 export const Memories: FC<MemoryProps> = ({ auth, history }) => {
   useEffect(() => {
+    const fechMemoryData = async () => {
+      const memoryData = await getMemories(auth.getIdToken());
+      setIsLoadingMemories(false);
+      setMemories(memoryData);
+    };
+
     fechMemoryData();
   }, []);
 
   const [memories, setMemories] = useState<Array<MemoryDto>>([]);
   const [isLoadingMemories, setIsLoadingMemories] = useState<boolean>(true);
   const [isDeletingMemory, setIsDeletingMemory] = useState<boolean>(false);
-
-  const fechMemoryData = async () => {
-    const memoryData = await getMemories(auth.getIdToken());
-    setIsLoadingMemories(false);
-    setMemories(memoryData);
-  };
 
   const onEditButtonClick = (memoryId: string) => {
     history.push(`/memories/${memoryId}/edit`);
@@ -71,7 +71,7 @@ export const Memories: FC<MemoryProps> = ({ auth, history }) => {
                     icon: 'time',
                     ribbon: true
                   }}
-                  src={memory.thumnailAttachmentUrl}
+                  src={memory.thumbnailAttachmentUrl}
                   size="large"
                   wrapped
                 />

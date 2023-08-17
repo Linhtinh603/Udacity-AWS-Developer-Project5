@@ -1,5 +1,5 @@
 import { S3Event, SNSEvent, SNSHandler } from 'aws-lambda';
-import { UploadPictureToThumnailBucket } from '../../service';
+import { UploadPictureToThumbnailBucket } from '../../service';
 
 export const handler: SNSHandler = async (event: SNSEvent) => {
   console.log(`Receive SNS Event for resizing image - records count: `, event.Records.length);
@@ -10,7 +10,7 @@ export const handler: SNSHandler = async (event: SNSEvent) => {
     const s3Event: S3Event = JSON.parse(s3EventStr);
 
     for (const record of s3Event.Records) {
-      await UploadPictureToThumnailBucket(record);
+      await UploadPictureToThumbnailBucket(record);
     }
   }
 };

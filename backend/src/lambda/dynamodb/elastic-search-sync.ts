@@ -31,7 +31,7 @@ export const handler: DynamoDBStreamHandler = async (event: DynamoDBStreamEvent)
       content: newMemory.content.S,
       memoryDate: newMemory.memoryDate.S,
       attachmentUrl: newMemory.attachmentUrl.S,
-      thumnailAttachmentUrl: newMemory.thumnailAttachmentUrl.S,
+      thumbnailAttachmentUrl: newMemory.thumbnailAttachmentUrl.S,
       createdAt: newMemory.createdAt.S
     };
 
