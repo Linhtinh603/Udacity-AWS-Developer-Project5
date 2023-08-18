@@ -102,6 +102,10 @@ functions:
           - dynamodb:Scan
           - dynamodb:Delete
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.CONNECTION_TABLE}
+      - Effect: Allow
+        Action:
+          - execute-api:ManageConnections # allow websocket operations: POST, DELETE and GET.
+        Resource: arn:aws:execute-api:${self:provider.region}:*:*/${self:provider.stage}/*/@connections/*
 
   # Resize image after upload function
   ResizeImage:
