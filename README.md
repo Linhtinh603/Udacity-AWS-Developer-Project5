@@ -79,4 +79,4 @@ npm run start
 
 ## 3. Infrastructure diagram:
 
-![Infrastructure diagram](./AWS backend serverless diagram.png?raw=true)
+![Infrastructure diagram](https://github.com/Linhtinh603/Udacity-AWS-Developer-Project5/blob/master/AWS%20backend%20serverless%20diagram.png)
